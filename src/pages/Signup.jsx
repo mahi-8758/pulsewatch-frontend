@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Footer from '../components/Footer'
+import { confirmSignUp, getReadableAuthError, resendConfirmationCode, signUp } from '../services/auth'
 
 function Signup() {
   const [formData, setFormData] = useState({
@@ -11,13 +12,16 @@ function Signup() {
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [isVerification, setIsVerification] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleChange = (event) => {
     const { name, value } = event.target
     setFormData((previous) => ({ ...previous, [name]: value }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
     if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
@@ -33,7 +37,42 @@ function Signup() {
     }
 
     setError('')
-    setSuccess('Demo account created successfully. Please login to continue.')
+    setSuccess('')
+    setIsSubmitting(true)
+    try {
+      await signUp(formData)
+      setIsVerification(true)
+      setSuccess('A verification code was sent to your email.')
+    } catch (authError) {
+      setError(getReadableAuthError(authError))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleVerification = async (event) => {
+    event.preventDefault()
+    setError('')
+    setIsSubmitting(true)
+    try {
+      await confirmSignUp(formData.email, verificationCode)
+      setIsVerification(false)
+      setSuccess('Email verified successfully. Please login to continue.')
+    } catch (authError) {
+      setError(getReadableAuthError(authError))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleResend = async () => {
+    setError('')
+    try {
+      await resendConfirmationCode(formData.email)
+      setSuccess('A new verification code was sent to your email.')
+    } catch (authError) {
+      setError(getReadableAuthError(authError))
+    }
   }
 
   return (
@@ -50,7 +89,7 @@ function Signup() {
       <main className="container auth-wrap">
         <section className="auth-card">
           <h1>Create Account</h1>
-          <form onSubmit={handleSubmit} className="auth-form">
+          {!isVerification ? <form onSubmit={handleSubmit} className="auth-form">
             <label>
               <span>Name</span>
               <input
@@ -95,13 +134,25 @@ function Signup() {
               />
             </label>
 
-            <button type="submit" className="primary-button full-width">Create Account</button>
-          </form>
+            <button type="submit" className="primary-button full-width" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating Account...' : 'Create Account'}
+            </button>
+          </form> : (
+            <form onSubmit={handleVerification} className="auth-form">
+              <p>Enter the verification code sent to {formData.email}.</p>
+              <label>
+                <span>Verification Code</span>
+                <input value={verificationCode} onChange={(event) => setVerificationCode(event.target.value)} required />
+              </label>
+              <button type="submit" className="primary-button full-width" disabled={isSubmitting}>Verify Email</button>
+              <button type="button" className="secondary-button full-width" onClick={handleResend} disabled={isSubmitting}>Resend Code</button>
+            </form>
+          )}
 
           {error && <p className="error-message">{error}</p>}
           {success && <p className="success-message">{success}</p>}
 
-          {success && (
+          {success && !isVerification && (
             <p className="auth-link">
               <Link to="/login">Go to Login</Link>
             </p>

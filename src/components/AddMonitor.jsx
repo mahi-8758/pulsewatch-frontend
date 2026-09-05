@@ -1,4 +1,4 @@
-function AddMonitor({ isOpen, onClose, onAddMonitor, formData, setFormData }) {
+function AddMonitor({ isOpen, onClose, onAddMonitor, formData, setFormData, isSubmitting = false }) {
   if (!isOpen) return null
 
   const handleChange = (event) => {
@@ -16,7 +16,13 @@ function AddMonitor({ isOpen, onClose, onAddMonitor, formData, setFormData }) {
       <div className="modal-card" onClick={(event) => event.stopPropagation()}>
         <div className="modal-header">
           <h3>Add Monitor</h3>
-          <button type="button" className="close-button" onClick={onClose} aria-label="Close">
+          <button 
+            type="button" 
+            className="close-button" 
+            onClick={onClose} 
+            aria-label="Close"
+            disabled={isSubmitting}
+          >
             ×
           </button>
         </div>
@@ -31,6 +37,7 @@ function AddMonitor({ isOpen, onClose, onAddMonitor, formData, setFormData }) {
               onChange={handleChange}
               placeholder="Main Website"
               required
+              disabled={isSubmitting}
             />
           </label>
 
@@ -43,15 +50,25 @@ function AddMonitor({ isOpen, onClose, onAddMonitor, formData, setFormData }) {
               onChange={handleChange}
               placeholder="https://example.com"
               required
+              disabled={isSubmitting}
             />
           </label>
 
           <div className="modal-actions">
-            <button type="button" className="secondary-button" onClick={onClose}>
+            <button 
+              type="button" 
+              className="secondary-button" 
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
               Cancel
             </button>
-            <button type="submit" className="primary-button">
-              Add Monitor
+            <button 
+              type="submit" 
+              className="primary-button"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Adding...' : 'Add Monitor'}
             </button>
           </div>
         </form>

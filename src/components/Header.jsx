@@ -20,7 +20,6 @@ function Header() {
         </a>
       </nav>
 
-      <div className="demo-badge">Demo Mode</div>
     </header>
   )
 }

@@ -1,4 +1,4 @@
-function MonitorCard({ monitor }) {
+function MonitorCard({ monitor, onDelete }) {
   const isUp = monitor.status === 'UP'
 
   return (
@@ -9,9 +9,22 @@ function MonitorCard({ monitor }) {
           <p className="monitor-url">{monitor.url}</p>
         </div>
 
-        <span className={`status-badge ${isUp ? 'up' : 'down'}`}>
-          {monitor.status}
-        </span>
+        <div className="monitor-actions-header">
+          <span className={`status-badge ${isUp ? 'up' : 'down'}`}>
+            {monitor.status}
+          </span>
+          {onDelete && (
+            <button
+              type="button"
+              className="delete-button"
+              onClick={() => onDelete(monitor)}
+              title="Delete monitor"
+              aria-label={`Delete ${monitor.name}`}
+            >
+              Delete
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="monitor-meta">

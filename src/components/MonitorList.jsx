@@ -1,6 +1,6 @@
 import MonitorCard from './MonitorCard'
 
-function MonitorList({ monitors }) {
+function MonitorList({ monitors, onDelete }) {
   if (!monitors.length) {
     return (
       <section className="panel">
@@ -24,7 +24,7 @@ function MonitorList({ monitors }) {
 
       <div className="monitor-list">
         {monitors.map((monitor) => (
-          <MonitorCard key={monitor.id} monitor={monitor} />
+          <MonitorCard key={monitor.id} monitor={monitor} onDelete={onDelete} />
         ))}
       </div>
     </section>
