@@ -91,3 +91,9 @@ export async function deleteMonitor(targetId) {
     method: 'DELETE',
   })
 }
+
+export async function checkMonitor(targetId) {
+  return await request(`/targets/${encodeURIComponent(targetId)}/check`, {
+    method: 'POST',
+  })
+}

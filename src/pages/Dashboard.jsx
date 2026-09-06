@@ -5,7 +5,7 @@ import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
 import Footer from '../components/Footer'
 import IncidentList from '../components/IncidentList'
 import MonitorCard from '../components/MonitorCard'
-import { getMonitors, getIncidents, getHistory, createMonitor, deleteMonitor } from '../services/api'
+import { getMonitors, getIncidents, getHistory, createMonitor, deleteMonitor, checkMonitor } from '../services/api'
 import { signOut } from '../services/auth'
 
 function Dashboard() {
@@ -20,6 +20,7 @@ function Dashboard() {
   const [successMessage, setSuccessMessage] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [checkingIds, setCheckingIds] = useState([])
   const navigate = useNavigate()
 
   const refreshData = useCallback(async () => {
@@ -75,6 +76,49 @@ function Dashboard() {
         online > 0 ? Math.round(averageResponse / online) : 0,
     }
   }, [monitors])
+
+  const handleCheckMonitor = async (monitor) => {
+    if (checkingIds.includes(monitor.id)) return
+
+    try {
+      setError(null)
+      setSuccessMessage(null)
+      setCheckingIds((prev) => [...prev, monitor.id])
+
+      const result = await checkMonitor(monitor.id)
+
+      const updatedStatus = result.isUp ? 'UP' : 'DOWN'
+      const updatedStatusCode = result.statusCode
+      const updatedResponseTime = result.responseTimeMs
+      const updatedLastChecked = result.checkedAt ? new Date(result.checkedAt).toLocaleString() : 'Just now'
+
+      setMonitors((prev) =>
+        prev.map((m) => {
+          if (m.id === monitor.id) {
+            return {
+              ...m,
+              status: updatedStatus,
+              statusCode: updatedStatusCode,
+              responseTime: updatedResponseTime,
+              lastChecked: updatedLastChecked,
+            }
+          }
+          return m
+        }),
+      )
+
+      setSuccessMessage(
+        `Instant check completed for "${monitor.name}": ${updatedStatus} (${updatedStatusCode > 0 ? `HTTP ${updatedStatusCode}` : 'Unreachable'}, ${updatedResponseTime}ms)`,
+      )
+
+      await refreshData()
+    } catch (err) {
+      setError(err.message || `Failed to check monitor "${monitor.name}"`)
+      console.error('Error checking monitor:', err)
+    } finally {
+      setCheckingIds((prev) => prev.filter((id) => id !== monitor.id))
+    }
+  }
 
   const handleAddMonitor = async () => {
     const name = newMonitor.name.trim()
@@ -250,7 +294,9 @@ function Dashboard() {
                     <MonitorCard
                       key={monitor.id}
                       monitor={monitor}
+                      onCheck={handleCheckMonitor}
                       onDelete={(m) => setMonitorToDelete(m)}
+                      isChecking={checkingIds.includes(monitor.id)}
                     />
                   ))}
                 </div>
